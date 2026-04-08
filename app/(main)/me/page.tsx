@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowRight,
   Globe,
   Loader2,
   MapPin,
-  PencilLine,
-  Sparkles,
+  Upload,
 } from "lucide-react";
 import {
   Avatar,
@@ -16,7 +14,6 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -39,6 +36,7 @@ export default function MePage() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -116,6 +114,50 @@ export default function MePage() {
       setError("Something went wrong. Please try again.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAvatarUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/users/me/avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setError(data.message || "Failed to upload avatar");
+        return;
+      }
+
+      setAvatarUrl(data.avatar_url);
+      setUser((current) =>
+        current
+          ? {
+              ...current,
+              avatar_url: data.avatar_url,
+            }
+          : current,
+      );
+      setSuccess("Avatar uploaded successfully.");
+    } catch {
+      setError("Failed to upload avatar right now.");
+    } finally {
+      event.target.value = "";
+      setUploadingAvatar(false);
     }
   }
 
@@ -232,7 +274,24 @@ export default function MePage() {
                     placeholder="https://example.com/avatar.jpg"
                     className="h-10 border-slate-300 bg-white rounded-lg"
                   />
-                  <p className="text-xs text-slate-500">Use a direct image link</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                      {uploadingAvatar ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Upload className="h-3.5 w-3.5" />
+                      )}
+                      {uploadingAvatar ? "Uploading..." : "Upload image"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAvatarUpload}
+                        disabled={uploadingAvatar}
+                      />
+                    </label>
+                    <p className="text-xs text-slate-500">Max 5MB. JPG, PNG, WEBP, GIF.</p>
+                  </div>
                 </div>
               </div>
 

@@ -4,10 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  ArrowRight,
   ImageIcon,
   Loader2,
-  Sparkles,
+  Upload,
 } from "lucide-react";
 import {
   Avatar,
@@ -15,7 +14,6 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -40,6 +38,7 @@ export default function CreatePostPage() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [message, setMessage] = useState("");
@@ -114,6 +113,42 @@ export default function CreatePostPage() {
       setError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setUploadingImage(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/posts/image", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setError(data.message || "Could not upload image");
+        return;
+      }
+
+      setImageUrl(data.image_url);
+      setMessage("Image uploaded successfully.");
+    } catch {
+      setError("Could not upload image right now.");
+    } finally {
+      event.target.value = "";
+      setUploadingImage(false);
     }
   }
 
@@ -193,6 +228,24 @@ export default function CreatePostPage() {
                   placeholder="https://example.com/image.jpg"
                   className="h-10 border-slate-300 bg-white rounded-lg"
                 />
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                    {uploadingImage ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="h-3.5 w-3.5" />
+                    )}
+                    {uploadingImage ? "Uploading..." : "Upload image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                    />
+                  </label>
+                  <p className="text-xs text-slate-500">Max 10MB. JPG, PNG, WEBP, GIF.</p>
+                </div>
               </div>
 
               {/* Messages */}
@@ -253,7 +306,7 @@ export default function CreatePostPage() {
                 <Button
                   type="submit"
                   className="ml-auto rounded-lg"
-                  disabled={submitting || !content.trim()}
+                  disabled={submitting || uploadingImage || !content.trim()}
                 >
                   {submitting ? (
                     <>
