@@ -25,7 +25,7 @@ export async function GET(){
 
       return NextResponse.json(
         {
-            succes:true,
+                        success:true,
             posts:data,
         },
         {status:200},

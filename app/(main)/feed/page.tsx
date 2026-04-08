@@ -43,6 +43,18 @@ type CurrentUser = {
   avatar_url: string | null;
 };
 
+type SuggestedUser = {
+  id: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  avatar_url: string | null;
+};
+
+type FollowingItem = {
+  following_id: string;
+};
+
 function formatTime(value: string) {
   const date = new Date(value);
   return new Intl.DateTimeFormat("en", {
@@ -62,6 +74,9 @@ export default function FeedPage() {
   const router = useRouter();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
+  const [followedUserIds, setFollowedUserIds] = useState<string[]>([]);
+  const [followingPendingId, setFollowingPendingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState("");
@@ -70,16 +85,22 @@ export default function FeedPage() {
   useEffect(() => {
     async function loadFeed() {
       try {
-        const [feedResponse, meResponse] = await Promise.all([
+        const [feedResponse, meResponse, usersResponse] = await Promise.all([
           fetch("/api/feed", {
             cache: "no-store",
           }),
           fetch("/api/users/me", {
             cache: "no-store",
           }),
+          fetch("/api/users", {
+            cache: "no-store",
+          }),
         ]);
 
-        const data = await feedResponse.json();
+        const [data, usersData] = await Promise.all([
+          feedResponse.json(),
+          usersResponse.json(),
+        ]);
 
         if (!feedResponse.ok || !data.success) {
           setError(data.message || "Unable to load feed");
@@ -95,6 +116,36 @@ export default function FeedPage() {
               id: meData.user.id,
               avatar_url: meData.user.avatar_url ?? null,
             });
+
+            const followingResponse = await fetch(`/api/users/${meData.user.id}/following`, {
+              cache: "no-store",
+            });
+
+            if (followingResponse.ok) {
+              const followingData = await followingResponse.json();
+              if (followingData?.success && Array.isArray(followingData.following)) {
+                setFollowedUserIds(
+                  followingData.following
+                    .map((item: FollowingItem) => item.following_id)
+                    .filter((id: string | undefined): id is string => Boolean(id)),
+                );
+              }
+            }
+
+            if (usersResponse.ok && usersData?.success && Array.isArray(usersData.users)) {
+              const mappedSuggestions = usersData.users
+                .filter((user: SuggestedUser) => user.id !== meData.user.id)
+                .slice(0, 8)
+                .map((user: SuggestedUser) => ({
+                  id: user.id,
+                  username: user.username,
+                  first_name: user.first_name,
+                  last_name: user.last_name,
+                  avatar_url: user.avatar_url,
+                }));
+
+              setSuggestedUsers(mappedSuggestions);
+            }
           }
         }
       } catch {
@@ -136,6 +187,46 @@ export default function FeedPage() {
     }
   }
 
+  async function handleSuggestionFollow(targetUserId: string, currentlyFollowing: boolean) {
+    if (!currentUser) {
+      return;
+    }
+
+    setFollowingPendingId(targetUserId);
+
+    try {
+      const response = await fetch(`/api/users/${targetUserId}/follow`, {
+        method: currentlyFollowing ? "DELETE" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          follower_id: currentUser.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data?.success) {
+        return;
+      }
+
+      setFollowedUserIds((current) => {
+        if (currentlyFollowing) {
+          return current.filter((id) => id !== targetUserId);
+        }
+
+        if (current.includes(targetUserId)) {
+          return current;
+        }
+
+        return [...current, targetUserId];
+      });
+    } finally {
+      setFollowingPendingId(null);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-white text-slate-950">
       <div className="mx-auto grid w-full max-w-7xl gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -143,7 +234,7 @@ export default function FeedPage() {
         <aside className="hidden border-r border-slate-200 py-6 lg:block">
           <div className="sticky top-0 space-y-6 px-4">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/feed" className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-950 text-white">
                 <Sparkles className="h-5 w-5" />
               </div>
@@ -180,6 +271,52 @@ export default function FeedPage() {
                 {loggingOut ? "Logging out..." : "Logout"}
               </button>
             </nav>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Suggestions</p>
+              <div className="mt-3 space-y-2">
+                {suggestedUsers.length === 0 ? (
+                  <p className="text-xs text-slate-500">No account suggestions yet</p>
+                ) : (
+                  suggestedUsers.map((user) => {
+                    const fullName = `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || "User";
+                    const isFollowing = followedUserIds.includes(user.id);
+                    const isPending = followingPendingId === user.id;
+
+                    return (
+                      <div
+                        key={user.id}
+                        className="flex items-center justify-between gap-2 rounded-lg bg-white px-2.5 py-2"
+                      >
+                        <Link href={`/profile/${user.id}`} className="flex min-w-0 items-center gap-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatar_url ?? undefined} alt={fullName} />
+                            <AvatarFallback className="text-[10px]">
+                              {getInitials(user.first_name, user.last_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium text-slate-900">{fullName}</p>
+                            <p className="truncate text-[11px] text-slate-500">@{user.username}</p>
+                          </div>
+                        </Link>
+
+                        <Button
+                          type="button"
+                          variant={isFollowing ? "outline" : "default"}
+                          size="sm"
+                          className="h-7 rounded-md px-2 text-[11px]"
+                          disabled={isPending || !currentUser}
+                          onClick={() => handleSuggestionFollow(user.id, isFollowing)}
+                        >
+                          {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : isFollowing ? "Following" : "Follow"}
+                        </Button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         </aside>
 
@@ -228,11 +365,20 @@ export default function FeedPage() {
               </div>
             ) : filteredPosts.length === 0 ? (
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center space-y-3">
-                <p className="font-medium text-slate-950">No posts yet</p>
-                <p className="text-sm text-slate-600">Start a conversation by creating the first post</p>
-                <Button asChild size="sm" className="rounded-lg">
-                  <Link href="/create">Create a post</Link>
-                </Button>
+                {search.trim() ? (
+                  <>
+                    <p className="font-medium text-slate-950">No matching posts found</p>
+                    <p className="text-sm text-slate-600">Try a different keyword for author, username, or post content</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium text-slate-950">No posts yet</p>
+                    <p className="text-sm text-slate-600">Start a conversation by creating the first post</p>
+                    <Button asChild size="sm" className="rounded-lg">
+                      <Link href="/create">Create a post</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
