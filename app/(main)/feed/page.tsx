@@ -74,6 +74,8 @@ export default function FeedPage() {
   const router = useRouter();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [likedPostIds, setLikedPostIds] = useState<string[]>([]);
+  const [likePendingPostIds, setLikePendingPostIds] = useState<string[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [followedUserIds, setFollowedUserIds] = useState<string[]>([]);
   const [followingPendingId, setFollowingPendingId] = useState<string | null>(null);
@@ -224,6 +226,51 @@ export default function FeedPage() {
       });
     } finally {
       setFollowingPendingId(null);
+    }
+  }
+
+  async function handleLikeToggle(postId: string) {
+    if (!currentUser || likePendingPostIds.includes(postId)) {
+      return;
+    }
+
+    const isLiked = likedPostIds.includes(postId);
+
+    setLikePendingPostIds((current) => [...current, postId]);
+
+    try {
+      const response = await fetch(`/api/posts/${postId}/like`, {
+        method: isLiked ? "DELETE" : "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data?.success) {
+        if (!isLiked && response.status === 409) {
+          setLikedPostIds((current) => (current.includes(postId) ? current : [...current, postId]));
+        }
+        return;
+      }
+
+      if (isLiked) {
+        setLikedPostIds((current) => current.filter((id) => id !== postId));
+        setPosts((currentPosts) =>
+          currentPosts.map((post) =>
+            post.id === postId
+              ? { ...post, like_count: Math.max(post.like_count - 1, 0) }
+              : post,
+          ),
+        );
+      } else {
+        setLikedPostIds((current) => (current.includes(postId) ? current : [...current, postId]));
+        setPosts((currentPosts) =>
+          currentPosts.map((post) =>
+            post.id === postId ? { ...post, like_count: post.like_count + 1 } : post,
+          ),
+        );
+      }
+    } finally {
+      setLikePendingPostIds((current) => current.filter((id) => id !== postId));
     }
   }
 
@@ -389,62 +436,79 @@ export default function FeedPage() {
                     profile?.avatar_url ??
                     (currentUser?.id === post.author_id ? currentUser.avatar_url : null) ??
                     undefined;
+                  const isLiked = likedPostIds.includes(post.id);
+                  const isLiking = likePendingPostIds.includes(post.id);
 
                   return (
-                    <Link
+                    <article
                       key={post.id}
-                      href={`/post/${post.id}`}
                       className="block rounded-lg border border-slate-200 bg-white p-5 transition-all hover:border-slate-300 hover:shadow-sm"
                     >
-                      {/* Post Header */}
-                      <div className="flex gap-3 mb-3">
-                        <Avatar className="h-10 w-10 shrink-0">
-                          <AvatarImage src={avatarSrc} alt={name} />
-                          <AvatarFallback className="text-xs">
-                            {getInitials(profile?.first_name, profile?.last_name)}
-                          </AvatarFallback>
-                        </Avatar>
+                      <Link href={`/post/${post.id}`} className="block">
+                        {/* Post Header */}
+                        <div className="mb-3 flex gap-3">
+                          <Avatar className="h-10 w-10 shrink-0">
+                            <AvatarImage src={avatarSrc} alt={name} />
+                            <AvatarFallback className="text-xs">
+                              {getInitials(profile?.first_name, profile?.last_name)}
+                            </AvatarFallback>
+                          </Avatar>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2 flex-wrap">
-                            <p className="font-semibold text-sm text-slate-950">{name}</p>
-                            <p className="text-xs text-slate-500">{profile?.username ?? "@user"}</p>
-                            <span className="text-slate-400">·</span>
-                            <p className="text-xs text-slate-500">{formatTime(post.created_at)}</p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-baseline gap-2">
+                              <p className="text-sm font-semibold text-slate-950">{name}</p>
+                              <p className="text-xs text-slate-500">{profile?.username ?? "@user"}</p>
+                              <span className="text-slate-400">·</span>
+                              <p className="text-xs text-slate-500">{formatTime(post.created_at)}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Post Content */}
-                      <div className="space-y-3">
-                        <p className="text-sm leading-6 text-slate-700 whitespace-pre-line wrap-break-word">
-                          {post.content}
-                        </p>
+                        {/* Post Content */}
+                        <div className="space-y-3">
+                          <p className="wrap-break-word whitespace-pre-line text-sm leading-6 text-slate-700">
+                            {post.content}
+                          </p>
 
-                        {/* Image */}
-                        {post.image_url ? (
-                          <div className="aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-                            <img
-                              src={post.image_url}
-                              alt="Post attachment"
-                              className="h-full w-full object-contain"
-                            />
-                          </div>
-                        ) : null}
-
-                        {/* Actions */}
-                        <div className="flex gap-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
-                          <span className="inline-flex items-center gap-1.5 hover:text-slate-700">
-                            <Heart className="h-4 w-4" />
-                            <span>{post.like_count}</span>
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 hover:text-slate-700">
-                            <MessageCircle className="h-4 w-4" />
-                            <span>{post.comment_count}</span>
-                          </span>
+                          {/* Image */}
+                          {post.image_url ? (
+                            <div className="mx-auto w-full max-w-xl overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                              <img
+                                src={post.image_url}
+                                alt="Post attachment"
+                                className="aspect-square h-full w-full object-cover"
+                              />
+                            </div>
+                          ) : null}
                         </div>
+                      </Link>
+
+                      <div className="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                        <button
+                          type="button"
+                          onClick={() => handleLikeToggle(post.id)}
+                          disabled={!currentUser || isLiking}
+                          className={`inline-flex items-center gap-1.5 transition-colors ${
+                            isLiked ? "text-red-500" : "hover:text-slate-700"
+                          } disabled:opacity-60`}
+                        >
+                          {isLiking ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+                          )}
+                          <span>{post.like_count}</span>
+                        </button>
+
+                        <Link
+                          href={`/post/${post.id}`}
+                          className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-700"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          <span>{post.comment_count}</span>
+                        </Link>
                       </div>
-                    </Link>
+                    </article>
                   );
                 })}
               </div>
