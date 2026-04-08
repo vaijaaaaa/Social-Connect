@@ -59,14 +59,16 @@ export async function POST(request: Request, context: Context) {
       );
     }
 
-    const { error: updateError } = await admin
+    const { data: postData } = await admin
       .from("posts")
-      .update({ like_count: admin.rpc("increment_like_count", { post_id }) })
-      .eq("id", post_id);
+      .select("like_count")
+      .eq("id", post_id)
+      .single();
 
-    if (!updateError) {
-      await admin.rpc("increment_like_count", { post_id });
-    }
+    await admin
+      .from("posts")
+      .update({ like_count: (postData?.like_count || 0) + 1 })
+      .eq("id", post_id);
 
     return NextResponse.json(
       {
@@ -103,14 +105,21 @@ export async function DELETE(_: Request, context: Context) {
       );
     }
 
+    const { data: postData } = await admin
+      .from("posts")
+      .select("like_count")
+      .eq("id", post_id)
+      .single();
+
     await admin
       .from("posts")
-      .update({ like_count: admin.rpc("decrement_like_count", { post_id }) })
+      .update({ like_count: Math.max((postData?.like_count || 0) - 1, 0) })
       .eq("id", post_id);
 
-    if (likeData) {
-      await admin.rpc("decrement_like_count", { post_id });
-    }
+    await admin
+      .from("posts")
+      .update({ like_count: (postData?.like_count || 0) - 1 })
+      .eq("id", post_id);
 
     return NextResponse.json(
       {
