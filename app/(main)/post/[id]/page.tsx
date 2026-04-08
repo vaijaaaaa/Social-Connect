@@ -217,235 +217,197 @@ export default function PostDetailPage() {
   }
 
   const postAuthor = post?.profiles;
-  const authorName = postAuthor ? `${postAuthor.first_name} ${postAuthor.last_name}`.trim() : "SocialConnect user";
+  const authorName = postAuthor ? `${postAuthor.first_name} ${postAuthor.last_name}`.trim() : "User";
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.96),rgba(241,245,249,0.92)_35%,rgba(226,232,240,1))] text-slate-950">
-      <div className="mx-auto grid min-h-screen w-full max-w-6xl gap-6 px-4 py-4 lg:grid-cols-[1fr_320px] lg:px-6">
-        <section className="space-y-6">
-          <header className="flex items-center justify-between rounded-[2rem] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
-            <Button asChild variant="ghost" className="rounded-full px-4">
-              <Link href="/feed">
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Link>
-            </Button>
+    <main className="min-h-screen bg-white text-slate-950">
+      <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <Button asChild variant="ghost" className="rounded-lg px-3 h-10" size="sm">
+            <Link href="/feed">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="ml-2">Back</span>
+            </Link>
+          </Button>
+        </div>
 
-            <div className="text-right">
-              <p className="text-sm text-slate-500">Post</p>
-              <h1 className="text-2xl font-semibold tracking-tight">Conversation</h1>
+        {loading ? (
+          <div className="flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 py-24">
+            <div className="text-center space-y-3">
+              <Loader2 className="h-6 w-6 animate-spin text-slate-400 mx-auto" />
+              <p className="text-sm text-slate-600">Loading post...</p>
             </div>
-          </header>
+          </div>
+        ) : error && !post ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center space-y-3">
+            <p className="font-medium text-red-900">Unable to load post</p>
+            <p className="text-sm text-red-700">{error}</p>
+            <Button asChild variant="outline" size="sm" className="rounded-lg">
+              <Link href="/feed">Return to feed</Link>
+            </Button>
+          </div>
+        ) : post ? (
+          <div className="space-y-6">
+            {/* Post */}
+            <article className="rounded-lg border border-slate-200 bg-white p-6 space-y-4">
+              {/* Header */}
+              <div className="flex items-start gap-4">
+                <Avatar className="h-11 w-11 shrink-0">
+                  <AvatarImage src={postAuthor?.avatar_url ?? undefined} alt={authorName} />
+                  <AvatarFallback className="text-xs">
+                    {initials(postAuthor?.first_name, postAuthor?.last_name)}
+                  </AvatarFallback>
+                </Avatar>
 
-          {loading ? (
-            <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-              <CardContent className="flex min-h-72 items-center justify-center p-8 text-slate-500">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Loading post...
-              </CardContent>
-            </Card>
-          ) : error && !post ? (
-            <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-              <CardContent className="space-y-4 p-8 text-center">
-                <p className="text-lg font-medium text-slate-950">Unable to load post</p>
-                <p className="text-sm text-slate-500">{error}</p>
-                <Button asChild className="rounded-full">
-                  <Link href="/feed">Return to feed</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : post ? (
-            <>
-              <Card className="overflow-hidden border-white/70 bg-white/85 shadow-sm backdrop-blur">
-                <CardContent className="space-y-5 p-5 sm:p-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="size-11">
-                        <AvatarImage src={postAuthor?.avatar_url ?? undefined} alt={authorName} />
-                        <AvatarFallback>{initials(postAuthor?.first_name, postAuthor?.last_name)}</AvatarFallback>
-                      </Avatar>
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold tracking-tight text-slate-950">{authorName}</p>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                            {postAuthor?.username ?? "@user"}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-500">{formatDate(post.created_at)}</p>
-                      </div>
-                    </div>
-
-                    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                      Active
-                    </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <p className="font-semibold text-sm text-slate-950">{authorName}</p>
+                    <p className="text-xs text-slate-500">{postAuthor?.username ?? "@user"}</p>
+                    <span className="text-slate-400">·</span>
+                    <p className="text-xs text-slate-500">{formatDate(post.created_at)}</p>
                   </div>
+                </div>
+              </div>
 
-                  <p className="whitespace-pre-line text-[15px] leading-7 text-slate-700">
-                    {post.content}
-                  </p>
+              {/* Content */}
+              <p className="text-[15px] leading-7 text-slate-700 whitespace-pre-line wrap-break-word">
+                {post.content}
+              </p>
 
-                  {post.image_url ? (
-                    <div className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-100">
-                      <img
-                        src={post.image_url}
-                        alt="Post attachment"
-                        className="h-80 w-full object-cover"
-                      />
-                    </div>
-                  ) : null}
+              {/* Image */}
+              {post.image_url && (
+                <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                  <img
+                    src={post.image_url}
+                    alt="Post attachment"
+                    className="w-full max-h-96 object-cover"
+                  />
+                </div>
+              )}
 
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-                    <div className="flex items-center gap-5 text-sm text-slate-500">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Heart className="h-4 w-4" /> {post.like_count}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <MessageCircle className="h-4 w-4" /> {post.comment_count}
-                      </span>
-                    </div>
+              {/* Stats & Actions */}
+              <div className="space-y-4 border-t border-slate-200 pt-4">
+                <div className="flex gap-6 text-xs text-slate-500 font-medium">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Heart className="h-4 w-4" />
+                    {post.like_count}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <MessageCircle className="h-4 w-4" />
+                    {post.comment_count}
+                  </span>
+                </div>
 
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-full px-5"
-                      onClick={handleLike}
-                      disabled={liking || liked || !currentUser}
-                    >
-                      {liking ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Liking...
-                        </>
-                      ) : liked ? (
-                        <>
-                          <Heart className="h-4 w-4 fill-current" />
-                          Liked
-                        </>
-                      ) : (
-                        <>
-                          <Heart className="h-4 w-4" />
-                          Like post
-                        </>
-                      )}
-                    </Button>
+                <div className="border-t border-slate-200 pt-4">
+                  <Button
+                    type="button"
+                    variant={liked ? "default" : "outline"}
+                    className="rounded-lg w-full"
+                    onClick={handleLike}
+                    disabled={liking || liked || !currentUser}
+                  >
+                    {liking ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Liking...
+                      </>
+                    ) : liked ? (
+                      <>
+                        <Heart className="h-4 w-4 fill-current" />
+                        Liked
+                      </>
+                    ) : (
+                      <>
+                        <Heart className="h-4 w-4" />
+                        Like this post
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </article>
+
+            {/* Comment Form */}
+            <div className="rounded-lg border border-slate-200 bg-white p-6 space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Comments</p>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight">Join the discussion</h2>
+              </div>
+
+              <form onSubmit={handleCommentSubmit} className="space-y-3">
+                <Textarea
+                  value={commentText}
+                  onChange={(event) => setCommentText(event.target.value.slice(0, 280))}
+                  placeholder="What do you think?"
+                  className="min-h-24 border-slate-300 bg-white rounded-lg"
+                  required
+                />
+
+                {error && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                    <p className="text-sm text-red-700">{error}</p>
                   </div>
-                </CardContent>
-              </Card>
+                )}
 
-              <Card className="border-white/70 bg-white/85 shadow-sm backdrop-blur">
-                <CardContent className="space-y-5 p-5 sm:p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-500">Write a comment</p>
-                      <h2 className="text-xl font-semibold tracking-tight">Join the discussion</h2>
-                    </div>
-                    <Sparkles className="h-5 w-5 text-slate-400" />
-                  </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-slate-500">{remainingChars} characters left</p>
+                  <Button 
+                    type="submit" 
+                    className="rounded-lg" 
+                    disabled={postingComment || !commentText.trim()}
+                    size="sm"
+                  >
+                    {postingComment ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Posting...
+                      </>
+                    ) : (
+                      "Post comment"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
 
-                  <form onSubmit={handleCommentSubmit} className="space-y-4">
-                    <Textarea
-                      value={commentText}
-                      onChange={(event) => setCommentText(event.target.value.slice(0, 280))}
-                      placeholder="Share a thoughtful reply..."
-                      className="min-h-28 rounded-[1.5rem] border-slate-200 bg-white px-4 py-4 text-base"
-                      required
-                    />
-
-                    <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span>{remainingChars} characters left</span>
-                      <Button type="submit" className="rounded-full px-5" disabled={postingComment || !commentText.trim()}>
-                        {postingComment ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Posting...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="h-4 w-4" />
-                            Comment
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-
-                  {error ? <p className="text-sm text-red-600">{error}</p> : null}
-                </CardContent>
-              </Card>
-
+            {/* Comments List */}
+            {comments.length === 0 ? (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center">
+                <p className="text-sm text-slate-600">No comments yet. Be the first to reply.</p>
+              </div>
+            ) : (
               <div className="space-y-3">
-                {comments.length === 0 ? (
-                  <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-                    <CardContent className="p-8 text-center text-sm text-slate-500">
-                      No comments yet. Be the first to reply.
-                    </CardContent>
-                  </Card>
-                ) : (
-                  comments.map((comment) => {
-                    const commentProfile = comment.profiles;
+                {comments.map((comment) => {
+                  const commentProfile = comment.profiles;
+                  return (
+                    <div key={comment.id} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarImage src={commentProfile?.avatar_url ?? undefined} alt={commentProfile?.username ?? ""} />
+                          <AvatarFallback className="text-xs">
+                            {commentProfile?.username?.slice(0, 2).toUpperCase() ?? "SC"}
+                          </AvatarFallback>
+                        </Avatar>
 
-                    return (
-                      <Card key={comment.id} className="border-white/70 bg-white/85 shadow-sm backdrop-blur">
-                        <CardContent className="space-y-4 p-5 sm:p-6">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="size-9">
-                              <AvatarImage src={commentProfile?.avatar_url ?? undefined} alt={commentProfile?.username ?? "Commenter"} />
-                              <AvatarFallback>
-                                {commentProfile?.username?.slice(0, 2).toUpperCase() ?? "SC"}
-                              </AvatarFallback>
-                            </Avatar>
-
-                            <div>
-                              <p className="text-sm font-medium text-slate-950">
-                                @{commentProfile?.username ?? "user"}
-                              </p>
-                              <p className="text-xs text-slate-500">{formatDate(comment.created_at)}</p>
-                            </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2 flex-wrap">
+                            <p className="text-xs font-medium text-slate-950">@{commentProfile?.username ?? "user"}</p>
+                            <span className="text-slate-400 text-xs">·</span>
+                            <p className="text-xs text-slate-500">{formatDate(comment.created_at)}</p>
                           </div>
-
-                          <p className="whitespace-pre-line text-sm leading-6 text-slate-700">
+                          <p className="mt-1 text-sm leading-6 text-slate-700 whitespace-pre-line wrap-break-word">
                             {comment.content}
                           </p>
-                        </CardContent>
-                      </Card>
-                    );
-                  })
-                )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </>
-          ) : null}
-        </section>
-
-        <aside className="space-y-4">
-          <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-            <CardContent className="space-y-4 p-5">
-              <p className="text-sm text-slate-500">About this post</p>
-              <div className="space-y-2 text-sm text-slate-600">
-                <p className="rounded-2xl bg-slate-100 px-3 py-2">Likes and comments are stored separately</p>
-                <p className="rounded-2xl bg-slate-100 px-3 py-2">The feed stays chronological by default</p>
-                <p className="rounded-2xl bg-slate-100 px-3 py-2">This detail view is built for discussion</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-            <CardContent className="space-y-4 p-5">
-              <p className="text-sm text-slate-500">Next steps</p>
-              <div className="space-y-3 text-sm">
-                <Link href="/create" className="block rounded-2xl bg-slate-100 px-3 py-2 text-slate-700 hover:bg-slate-200">
-                  Create a new post
-                </Link>
-                <Link href="/feed" className="block rounded-2xl bg-slate-100 px-3 py-2 text-slate-700 hover:bg-slate-200">
-                  Return to feed
-                </Link>
-                <Button asChild variant="ghost" className="h-auto w-full justify-start rounded-2xl bg-slate-100 px-3 py-2 text-sm text-slate-700 hover:bg-slate-200">
-                  <Link href="/me">Open my profile</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </aside>
+            )}
+          </div>
+        ) : null}
       </div>
     </main>
   );

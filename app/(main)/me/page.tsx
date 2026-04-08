@@ -122,199 +122,191 @@ export default function MePage() {
   const initials = `${user?.first_name?.[0] ?? "S"}${user?.last_name?.[0] ?? "C"}`.toUpperCase();
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.96),rgba(241,245,249,0.92)_35%,rgba(226,232,240,1))] text-slate-950">
-      <div className="mx-auto grid min-h-screen w-full max-w-6xl gap-6 px-4 py-4 lg:grid-cols-[1fr_360px] lg:px-6">
-        <section className="space-y-6">
-          <header className="flex flex-col gap-4 rounded-[2rem] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Profile</p>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Edit your profile</h1>
+    <main className="min-h-screen bg-white text-slate-950">
+      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Settings</p>
+            <h1 className="text-3xl font-semibold tracking-tight">Edit profile</h1>
+          </div>
+          <Button asChild variant="outline" className="rounded-lg" size="sm">
+            <Link href="/feed">Back</Link>
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 py-24">
+            <div className="text-center space-y-3">
+              <Loader2 className="h-6 w-6 animate-spin text-slate-400 mx-auto" />
+              <p className="text-sm text-slate-600">Loading your profile...</p>
+            </div>
+          </div>
+        ) : error && !user ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center space-y-3">
+            <p className="font-medium text-red-900">Unable to load profile</p>
+            <p className="text-sm text-red-700">{error}</p>
+            <Button asChild variant="outline" size="sm" className="rounded-lg">
+              <Link href="/login">Go to login</Link>
+            </Button>
+          </div>
+        ) : user ? (
+          <div className="space-y-6">
+            {/* Current Profile Card */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Current profile</p>
+              <div className="flex items-start gap-4">
+                <Avatar className="h-14 w-14 shrink-0">
+                  <AvatarImage src={user.avatar_url ?? undefined} alt={user.username} />
+                  <AvatarFallback className="text-sm font-semibold">{initials}</AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1 space-y-1">
+                  <p className="font-semibold text-sm text-slate-950">
+                    {user.first_name} {user.last_name}
+                  </p>
+                  <p className="text-xs text-slate-600">@{user.username}</p>
+                  <p className="text-xs text-slate-500">{user.email}</p>
+                </div>
+              </div>
             </div>
 
-            <Button asChild variant="outline" className="rounded-full px-5">
-              <Link href="/feed">
-                Back to feed
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </header>
-
-          {loading ? (
-            <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-              <CardContent className="flex min-h-72 items-center justify-center p-8 text-slate-500">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Loading your profile...
-              </CardContent>
-            </Card>
-          ) : error && !user ? (
-            <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-              <CardContent className="space-y-4 p-8 text-center">
-                <p className="text-lg font-medium text-slate-950">Unable to open profile</p>
-                <p className="text-sm text-slate-500">{error}</p>
-                <Button asChild className="rounded-full">
-                  <Link href="/login">Go to login</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : user ? (
-            <>
-              <Card className="border-white/70 bg-white/85 shadow-sm backdrop-blur">
-                <CardContent className="space-y-5 p-5 sm:p-6">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="size-14">
-                        <AvatarImage src={user.avatar_url ?? undefined} alt={user.username} />
-                        <AvatarFallback>{initials}</AvatarFallback>
-                      </Avatar>
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xl font-semibold tracking-tight text-slate-950">
-                            {user.first_name} {user.last_name}
-                          </p>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                            @{user.username}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-500">{user.email}</p>
-                      </div>
-                    </div>
-
-                    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                      Last login {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : "unknown"}
-                    </div>
+            {/* Edit Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Name Fields */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold tracking-tight">About you</h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label htmlFor="firstName" className="text-sm font-medium text-slate-700">
+                      First name
+                    </label>
+                    <Input
+                      id="firstName"
+                      value={firstName}
+                      onChange={(event) => setFirstName(event.target.value)}
+                      placeholder="First"
+                      className="h-10 border-slate-300 bg-white rounded-lg"
+                    />
                   </div>
 
-                  <form onSubmit={handleSubmit} className="grid gap-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-slate-600">First name</p>
-                        <Input
-                          value={firstName}
-                          onChange={(event) => setFirstName(event.target.value)}
-                          placeholder="First name"
-                          className="h-11 rounded-full border-slate-200 bg-white px-4"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-slate-600">Last name</p>
-                        <Input
-                          value={lastName}
-                          onChange={(event) => setLastName(event.target.value)}
-                          placeholder="Last name"
-                          className="h-11 rounded-full border-slate-200 bg-white px-4"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-slate-600">Bio</p>
-                      <Textarea
-                        value={bio}
-                        onChange={(event) => setBio(event.target.value.slice(0, 160))}
-                        placeholder="Short bio..."
-                        className="min-h-28 rounded-[1.5rem] border-slate-200 bg-white px-4 py-4 text-base"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-slate-600">Avatar URL</p>
-                      <Input
-                        value={avatarUrl}
-                        onChange={(event) => setAvatarUrl(event.target.value)}
-                        placeholder="https://..."
-                        className="h-11 rounded-full border-slate-200 bg-white px-4"
-                      />
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-slate-600 inline-flex items-center gap-2">
-                          <Globe className="h-4 w-4" /> Website
-                        </p>
-                        <Input
-                          value={website}
-                          onChange={(event) => setWebsite(event.target.value)}
-                          placeholder="https://your-site.com"
-                          className="h-11 rounded-full border-slate-200 bg-white px-4"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-slate-600 inline-flex items-center gap-2">
-                          <MapPin className="h-4 w-4" /> Location
-                        </p>
-                        <Input
-                          value={location}
-                          onChange={(event) => setLocation(event.target.value)}
-                          placeholder="City, Country"
-                          className="h-11 rounded-full border-slate-200 bg-white px-4"
-                        />
-                      </div>
-                    </div>
-
-                    {success ? <p className="text-sm text-emerald-600">{success}</p> : null}
-                    {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-                    <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
-                      <p className="text-sm text-slate-500">Keep it clear and easy for people to recognize you.</p>
-                      <Button type="submit" className="rounded-full px-6" disabled={saving}>
-                        {saving ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            Save profile
-                            <PencilLine className="h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </>
-          ) : null}
-        </section>
-
-        <aside className="space-y-4">
-          <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-            <CardContent className="space-y-4 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-950">Profile tips</p>
-                  <p className="text-xs text-slate-500">Keep your identity simple</p>
+                  <div className="space-y-2">
+                    <label htmlFor="lastName" className="text-sm font-medium text-slate-700">
+                      Last name
+                    </label>
+                    <Input
+                      id="lastName"
+                      value={lastName}
+                      onChange={(event) => setLastName(event.target.value)}
+                      placeholder="Last"
+                      className="h-10 border-slate-300 bg-white rounded-lg"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="rounded-2xl bg-slate-100 px-3 py-2">Use a clear avatar URL</li>
-                <li className="rounded-2xl bg-slate-100 px-3 py-2">Add a short bio people can scan</li>
-                <li className="rounded-2xl bg-slate-100 px-3 py-2">Link a website if you have one</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-            <CardContent className="space-y-4 p-5">
-              <p className="text-sm font-medium text-slate-500">Quick links</p>
-              <div className="space-y-3 text-sm">
-                <Link href="/feed" className="block rounded-2xl bg-slate-100 px-3 py-2 text-slate-700 hover:bg-slate-200">
-                  Open feed
-                </Link>
-                <Link href={`/profile/${user?.id ?? ""}`} className="block rounded-2xl bg-slate-100 px-3 py-2 text-slate-700 hover:bg-slate-200">
-                  View public profile
-                </Link>
+              {/* Bio */}
+              <div className="space-y-2">
+                <label htmlFor="bio" className="text-sm font-medium text-slate-700">
+                  Bio <span className="text-xs text-slate-500 font-normal">({bio.length}/160)</span>
+                </label>
+                <Textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(event) => setBio(event.target.value.slice(0, 160))}
+                  placeholder="Tell people about yourself..."
+                  className="min-h-24 border-slate-300 bg-white rounded-lg"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </aside>
+
+              {/* Avatar */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold tracking-tight">Photo & Links</h2>
+                <div className="space-y-2">
+                  <label htmlFor="avatarUrl" className="text-sm font-medium text-slate-700">
+                    Avatar URL
+                  </label>
+                  <Input
+                    id="avatarUrl"
+                    value={avatarUrl}
+                    onChange={(event) => setAvatarUrl(event.target.value)}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="h-10 border-slate-300 bg-white rounded-lg"
+                  />
+                  <p className="text-xs text-slate-500">Use a direct image link</p>
+                </div>
+              </div>
+
+              {/* Links */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label htmlFor="website" className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                    <Globe className="h-4 w-4" />
+                    Website
+                  </label>
+                  <Input
+                    id="website"
+                    value={website}
+                    onChange={(event) => setWebsite(event.target.value)}
+                    placeholder="https://yoursite.com"
+                    className="h-10 border-slate-300 bg-white rounded-lg"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="location" className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4" />
+                    Location
+                  </label>
+                  <Input
+                    id="location"
+                    value={location}
+                    onChange={(event) => setLocation(event.target.value)}
+                    placeholder="City, Country"
+                    className="h-10 border-slate-300 bg-white rounded-lg"
+                  />
+                </div>
+              </div>
+
+              {/* Messages */}
+              {success && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                  <p className="text-sm text-emerald-700">{success}</p>
+                </div>
+              )}
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 border-t border-slate-200 pt-6">
+                <Button
+                  type="button"
+                  asChild
+                  variant="outline"
+                  className="rounded-lg"
+                >
+                  <Link href="/feed">Cancel</Link>
+                </Button>
+                <Button
+                  type="submit"
+                  className="ml-auto rounded-lg"
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save changes"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        ) : null}
       </div>
     </main>
   );

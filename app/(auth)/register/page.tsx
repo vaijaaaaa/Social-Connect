@@ -3,8 +3,6 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Feather, ShieldCheck, Sparkles } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +25,8 @@ export default function RegisterPage() {
     setErrorMessage("");
     setSuccessMessage("");
 
+    const normalizedUsername = username.trim().replace(/^@+/, "");
+
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
@@ -34,10 +34,10 @@ export default function RegisterPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
-          username,
-          first_name: firstName,
-          last_name: lastName,
+          email: email.trim(),
+          username: normalizedUsername,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
           password,
         }),
       });
@@ -45,7 +45,12 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        setErrorMessage(data.message || "Registration failed");
+        const fieldErrors = data?.errors?.fieldErrors as Record<string, string[]> | undefined;
+        const firstFieldError = fieldErrors
+          ? Object.values(fieldErrors).find((messages) => Array.isArray(messages) && messages.length > 0)?.[0]
+          : undefined;
+
+        setErrorMessage(firstFieldError || data.message || "Registration failed");
         return;
       }
 
@@ -67,147 +72,133 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.98),rgba(241,245,249,0.96)_35%,rgba(226,232,240,1))] text-slate-950">
-      <div className="mx-auto grid min-h-screen w-full max-w-6xl gap-6 px-4 py-4 lg:grid-cols-[0.95fr_1.05fr] lg:px-6">
-        <aside className="hidden overflow-hidden rounded-[2rem] border border-slate-200 bg-white/80 shadow-xl backdrop-blur lg:flex lg:flex-col lg:justify-between">
-          <div className="p-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-950 px-3 py-1 text-sm text-white">
-              <Sparkles className="h-4 w-4" />
+    <main className="min-h-screen bg-[#f7f7f5] text-slate-950">
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+        <section className="w-full max-w-md rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)] sm:p-8">
+          <div className="space-y-2 text-center">
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 text-sm font-semibold tracking-tight text-slate-950"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-950 text-white">S</span>
               SocialConnect
-            </div>
-
-            <div className="mt-10 space-y-5">
-              <h1 className="max-w-lg text-5xl font-semibold tracking-tight text-slate-950">
-                Create your profile and start sharing in minutes.
-              </h1>
-              <p className="max-w-xl text-lg leading-8 text-slate-600">
-                Keep your profile clean, post text and images, and build a feed that feels calm and easy to scan.
-              </p>
-            </div>
+            </Link>
+            <h2 className="text-2xl font-semibold tracking-tight">Create account</h2>
+            <p className="text-sm text-slate-600">Sign up to start sharing</p>
           </div>
 
-          <div className="grid gap-3 border-t border-slate-200 p-8 sm:grid-cols-3">
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-              <ShieldCheck className="h-5 w-5 text-slate-700" />
-              <p className="mt-3 text-sm font-medium text-slate-950">Secure sessions</p>
-              <p className="mt-1 text-sm text-slate-500">JWT cookies handled server-side.</p>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium text-slate-700">
+                Email address
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                className="h-11 rounded-xl border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus-visible:ring-slate-300"
+              />
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-              <Feather className="h-5 w-5 text-slate-700" />
-              <p className="mt-3 text-sm font-medium text-slate-950">Fast posting</p>
-              <p className="mt-1 text-sm text-slate-500">Simple text and image uploads.</p>
+
+            <div className="space-y-2">
+              <label htmlFor="username" className="text-sm font-medium text-slate-700">
+                Username
+              </label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="yourname"
+                autoComplete="username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                required
+                className="h-11 rounded-xl border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus-visible:ring-slate-300"
+              />
+              <p className="text-xs text-slate-500">Letters, numbers, underscore only. You can type with or without @.</p>
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-              <Sparkles className="h-5 w-5 text-slate-700" />
-              <p className="mt-3 text-sm font-medium text-slate-950">Minimal UI</p>
-              <p className="mt-1 text-sm text-slate-500">A calm, focused social experience.</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label htmlFor="firstName" className="text-sm font-medium text-slate-700">
+                  First name
+                </label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  placeholder="First"
+                  autoComplete="given-name"
+                  value={firstName}
+                  onChange={(event) => setFirstName(event.target.value)}
+                  required
+                  className="h-11 rounded-xl border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus-visible:ring-slate-300"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="lastName" className="text-sm font-medium text-slate-700">
+                  Last name
+                </label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  placeholder="Last"
+                  autoComplete="family-name"
+                  value={lastName}
+                  onChange={(event) => setLastName(event.target.value)}
+                  required
+                  className="h-11 rounded-xl border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus-visible:ring-slate-300"
+                />
+              </div>
             </div>
+
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                autoComplete="new-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                className="h-11 rounded-xl border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus-visible:ring-slate-300"
+              />
+            </div>
+
+            {errorMessage ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3">
+                <p className="text-sm text-red-700">{errorMessage}</p>
+              </div>
+            ) : null}
+
+            {successMessage ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                <p className="text-sm text-emerald-700">{successMessage}</p>
+              </div>
+            ) : null}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="h-11 w-full rounded-xl bg-slate-950 text-white hover:bg-slate-800"
+            >
+              {loading ? "Creating account..." : "Create account"}
+            </Button>
+          </form>
+
+          <div className="mt-6 border-t border-slate-200 pt-6 text-center">
+            <p className="text-sm text-slate-600">
+              Already have an account?{" "}
+              <Link href="/login" className="font-medium text-slate-950 hover:underline">
+                Log in instead
+              </Link>
+            </p>
           </div>
-        </aside>
-
-        <section className="flex items-center justify-center py-8 lg:py-0">
-          <Card className="w-full max-w-md border-white/70 bg-white/85 shadow-xl backdrop-blur">
-            <CardHeader className="space-y-2 p-6 pb-0">
-              <CardTitle className="text-3xl tracking-tight">Create account</CardTitle>
-              <p className="text-sm text-slate-500">
-                Register with your email, username, and a password to get started.
-              </p>
-            </CardHeader>
-
-            <CardContent className="p-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600">Email</label>
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    required
-                    className="h-11 rounded-full border-slate-200 bg-white px-4"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600">Username</label>
-                  <Input
-                    placeholder="Username"
-                    autoComplete="username"
-                    value={username}
-                    onChange={(event) => setUsername(event.target.value)}
-                    required
-                    className="h-11 rounded-full border-slate-200 bg-white px-4"
-                  />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-600">First name</label>
-                    <Input
-                      placeholder="First name"
-                      autoComplete="given-name"
-                      value={firstName}
-                      onChange={(event) => setFirstName(event.target.value)}
-                      required
-                      className="h-11 rounded-full border-slate-200 bg-white px-4"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-600">Last name</label>
-                    <Input
-                      placeholder="Last name"
-                      autoComplete="family-name"
-                      value={lastName}
-                      onChange={(event) => setLastName(event.target.value)}
-                      required
-                      className="h-11 rounded-full border-slate-200 bg-white px-4"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600">Password</label>
-                  <Input
-                    type="password"
-                    placeholder="Password (min 8 chars)"
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    required
-                    className="h-11 rounded-full border-slate-200 bg-white px-4"
-                  />
-                </div>
-
-                {errorMessage ? (
-                  <p className="text-sm text-red-600">{errorMessage}</p>
-                ) : null}
-
-                {successMessage ? (
-                  <p className="text-sm text-emerald-600">{successMessage}</p>
-                ) : null}
-
-                <Button type="submit" className="h-11 w-full rounded-full px-5" disabled={loading}>
-                  {loading ? (
-                    "Creating account..."
-                  ) : (
-                    <>
-                      Register
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-
-              <p className="mt-6 text-center text-sm text-slate-500">
-                Already have an account?{" "}
-                <Link href="/login" className="font-medium text-slate-950 hover:underline">
-                  Login instead
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
         </section>
       </div>
     </main>

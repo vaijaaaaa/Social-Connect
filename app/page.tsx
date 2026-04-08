@@ -51,136 +51,155 @@ const previewPosts = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.9),rgba(241,245,249,0.9)_40%,rgba(226,232,240,1))] text-slate-950">
-      <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between rounded-full border border-white/70 bg-white/70 px-4 py-3 shadow-sm backdrop-blur">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white">
+    <main className="min-h-screen bg-white text-slate-950">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Navigation */}
+        <header className="flex items-center justify-between py-6">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-950 text-white">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
               <p className="text-sm font-semibold tracking-tight">SocialConnect</p>
-              <p className="text-xs text-slate-500">Minimal social experience</p>
             </div>
           </Link>
 
-          <div className="hidden items-center gap-2 sm:flex">
-            <Button asChild variant="ghost">
-              <Link href="/login">Login</Link>
+          <nav className="hidden items-center gap-2 sm:flex">
+            <Button asChild variant="ghost" className="rounded-lg">
+              <Link href="/login">Log in</Link>
             </Button>
-            <Button asChild className="rounded-full px-5">
-              <Link href="/register">
-                Get started
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+            <Button asChild className="rounded-lg">
+              <Link href="/register">Sign up</Link>
             </Button>
-          </div>
+          </nav>
         </header>
 
-        <div className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[1.15fr_0.85fr] lg:py-16">
+        {/* Hero Section */}
+        <section className="grid gap-12 py-16 lg:grid-cols-2 lg:items-center lg:py-24">
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-600 shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              Built for thoughtful sharing
-            </div>
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="text-slate-600">For thoughtful creators</span>
+              </div>
 
-            <div className="space-y-5">
-              <h1 className="max-w-2xl text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl lg:text-7xl">
-                A clean social space for posts, profiles, and real engagement.
+              <h1 className="text-5xl font-semibold leading-tight tracking-tight sm:text-6xl">
+                Social media that doesn't shout
               </h1>
-              <p className="max-w-xl text-lg leading-8 text-slate-600 sm:text-xl">
-                SocialConnect is a minimal social media app with posts, avatars,
-                comments, likes, and a feed that stays fast and focused.
+              <p className="text-lg leading-8 text-slate-600">
+                A minimal space for posts, profiles, and genuine conversations. No algorithms, no noise—just your thoughts and the people you follow.
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="rounded-full px-7">
-                <Link href="/register">
-                  Create account
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild size="lg" className="rounded-lg">
+                <Link href="/register">Get started</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full px-7">
-                <Link href="/feed">Explore feed</Link>
+              <Button asChild size="lg" variant="outline" className="rounded-lg">
+                <Link href="/login">Sign in</Link>
               </Button>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            {/* Stats */}
+            <div className="grid gap-6 pt-8 sm:grid-cols-3">
               {stats.map((stat) => (
-                <Card key={stat.label} className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-                  <CardContent className="p-5">
-                    <p className="text-2xl font-semibold tracking-tight">{stat.value}</p>
-                    <p className="mt-1 text-sm text-slate-500">{stat.label}</p>
-                  </CardContent>
-                </Card>
+                <div key={stat.label} className="space-y-1">
+                  <p className="text-2xl font-semibold">{stat.value}</p>
+                  <p className="text-sm text-slate-600">{stat.label}</p>
+                </div>
               ))}
             </div>
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 -z-10 rounded-[2rem] bg-slate-950/5 blur-3xl" />
-            <Card className="overflow-hidden border-slate-200/80 bg-white/85 shadow-2xl backdrop-blur">
-              <CardContent className="space-y-6 p-6 sm:p-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-500">Live preview</p>
-                    <h2 className="text-2xl font-semibold tracking-tight">Today&apos;s highlights</h2>
-                  </div>
-                  <div className="rounded-full bg-slate-950 px-3 py-1 text-xs font-medium text-white">
-                    Feed
-                  </div>
-                </div>
+          {/* Right side preview */}
+          <div className="relative order-first lg:order-last">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+              <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+                <p className="text-sm font-medium text-slate-600">Latest posts</p>
+              </div>
 
-                <div className="space-y-4">
-                  {previewPosts.map((post) => (
-                    <div key={post.handle} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-medium text-slate-950">{post.author}</p>
-                          <p className="text-sm text-slate-500">
-                            {post.handle} · {post.time}
-                          </p>
-                        </div>
-                        <div className="h-11 w-11 rounded-2xl bg-linear-to-br from-slate-900 to-slate-600" />
+              <div className="space-y-0 divide-y divide-slate-200">
+                {previewPosts.map((post) => (
+                  <div key={post.handle} className="px-6 py-5 transition-colors hover:bg-slate-50">
+                    <div className="flex gap-4">
+                      <div className="min-w-max">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-300" />
                       </div>
 
-                      <p className="mt-4 text-sm leading-6 text-slate-700">{post.text}</p>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-baseline gap-2">
+                          <p className="font-medium text-slate-950">{post.author}</p>
+                          <p className="text-sm text-slate-500">{post.handle}</p>
+                          <p className="text-sm text-slate-400">·</p>
+                          <p className="text-sm text-slate-500">{post.time}</p>
+                        </div>
 
-                      <div className="mt-4 flex items-center gap-4 text-sm text-slate-500">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Heart className="h-4 w-4" /> {post.likes}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <MessageCircle className="h-4 w-4" /> {post.comments}
-                        </span>
+                        <p className="text-sm leading-6 text-slate-700">{post.text}</p>
+
+                        <div className="flex gap-6 pt-2 text-sm text-slate-500">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Heart className="h-4 w-4" /> {post.likes}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <MessageCircle className="h-4 w-4" /> {post.comments}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="grid gap-4 pb-6 md:grid-cols-3">
-          {features.map((feature) => {
-            const Icon = feature.icon;
+        {/* Features Section */}
+        <section className="space-y-12 border-t border-slate-200 py-16">
+          <div className="space-y-4">
+            <p className="text-sm font-medium text-slate-600">Key features</p>
+            <h2 className="text-3xl font-semibold">Built for creators and communities</h2>
+          </div>
 
-            return (
-              <Card key={feature.title} className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-                <CardContent className="space-y-3 p-5">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+          <div className="grid gap-6 md:grid-cols-3">
+            {features.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <div key={feature.title} className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-white">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="text-lg font-semibold tracking-tight">{feature.title}</h3>
+                  <h3 className="text-lg font-semibold">{feature.title}</h3>
                   <p className="text-sm leading-6 text-slate-600">{feature.description}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="space-y-8 rounded-2xl border border-slate-200 bg-slate-950 px-8 py-16 text-white sm:px-12 sm:py-20">
+          <div className="space-y-4">
+            <h2 className="text-3xl font-semibold">Ready to join?</h2>
+            <p className="max-w-lg text-lg text-slate-300">
+              Create your account in minutes and start building your community today
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg" className="rounded-lg bg-white text-slate-950 hover:bg-slate-100">
+              <Link href="/register">Create free account</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="rounded-lg border-slate-700 text-white hover:bg-slate-800">
+              <Link href="/login">Already a member?</Link>
+            </Button>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="border-t border-slate-200 py-8 text-center text-sm text-slate-600">
+          <p>© 2024 SocialConnect. Minimal social media.</p>
+        </footer>
+      </div>
     </main>
   );
 }

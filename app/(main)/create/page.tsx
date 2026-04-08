@@ -120,164 +120,154 @@ export default function CreatePostPage() {
   const initials = `${user?.first_name?.[0] ?? "S"}${user?.last_name?.[0] ?? "C"}`.toUpperCase();
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.96),rgba(241,245,249,0.92)_35%,rgba(226,232,240,1))] text-slate-950">
-      <div className="mx-auto grid min-h-screen w-full max-w-6xl gap-6 px-4 py-4 lg:grid-cols-[1fr_360px] lg:px-6">
-        <section className="space-y-6">
-          <header className="flex flex-col gap-4 rounded-[2rem] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Create</p>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">New post</h1>
+    <main className="min-h-screen bg-white text-slate-950">
+      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Create</p>
+            <h1 className="text-3xl font-semibold tracking-tight">New post</h1>
+          </div>
+          <Button asChild variant="outline" className="rounded-lg" size="sm">
+            <Link href="/feed">Back</Link>
+          </Button>
+        </div>
+
+        {loadingUser ? (
+          <div className="flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 py-20">
+            <div className="text-center space-y-3">
+              <Loader2 className="h-6 w-6 animate-spin text-slate-400 mx-auto" />
+              <p className="text-sm text-slate-600">Loading your profile...</p>
+            </div>
+          </div>
+        ) : error && !user ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center space-y-3">
+            <p className="font-medium text-red-900">Unable to open composer</p>
+            <p className="text-sm text-red-700">{error}</p>
+            <Button asChild variant="outline" size="sm" className="rounded-lg">
+              <Link href="/login">Go to login</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Author info */}
+            <div className="flex items-center gap-3">
+              <Avatar className="h-11 w-11 shrink-0">
+                <AvatarImage src={user?.avatar_url ?? undefined} alt={user?.username ?? "SocialConnect user"} />
+                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+              </Avatar>
+
+              <div>
+                <p className="font-semibold text-sm text-slate-950">
+                  {user ? `${user.first_name} ${user.last_name}`.trim() : "SocialConnect user"}
+                </p>
+                <p className="text-xs text-slate-500">{user?.username ? `@${user.username}` : "Ready to post"}</p>
+              </div>
             </div>
 
-            <Button asChild variant="outline" className="rounded-full px-5">
-              <Link href="/feed">
-                Back to feed
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </header>
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Textarea
+                  value={content}
+                  onChange={(event) => setContent(event.target.value.slice(0, 280))}
+                  placeholder="What's on your mind?"
+                  className="min-h-32 border-slate-300 bg-white rounded-lg text-base placeholder:text-slate-400"
+                  required
+                />
+                <div className="flex items-center justify-between px-1">
+                  <p className="text-xs text-slate-500">{remainingChars} characters left</p>
+                  <p className="text-xs font-medium text-slate-500">280 max</p>
+                </div>
+              </div>
 
-          {loadingUser ? (
-            <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-              <CardContent className="flex min-h-64 items-center justify-center p-8 text-slate-500">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Loading your profile...
-              </CardContent>
-            </Card>
-          ) : error && !user ? (
-            <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-              <CardContent className="space-y-4 p-8 text-center">
-                <p className="text-lg font-medium text-slate-950">Unable to open composer</p>
-                <p className="text-sm text-slate-500">{error}</p>
-                <Button asChild className="rounded-full">
-                  <Link href="/login">Go to login</Link>
+              {/* Image URL input */}
+              <div className="space-y-2">
+                <label htmlFor="imageUrl" className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <ImageIcon className="h-4 w-4" />
+                  Image URL (optional)
+                </label>
+                <Input
+                  id="imageUrl"
+                  value={imageUrl}
+                  onChange={(event) => setImageUrl(event.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="h-10 border-slate-300 bg-white rounded-lg"
+                />
+              </div>
+
+              {/* Messages */}
+              {message ? (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                  <p className="text-sm text-emerald-700">{message}</p>
+                </div>
+              ) : null}
+              {error ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              ) : null}
+
+              {/* Preview */}
+              {content || imageUrl ? (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Preview</p>
+                  <div className="rounded-lg bg-white border border-slate-200 p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9 shrink-0">
+                        <AvatarImage src={user?.avatar_url ?? undefined} alt={user?.username ?? ""} />
+                        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-950">
+                          {user ? `${user.first_name} ${user.last_name}`.trim() : "Your profile"}
+                        </p>
+                        <p className="text-xs text-slate-500">{user?.username ? `@${user.username}` : "@handle"}</p>
+                      </div>
+                    </div>
+
+                    {content && (
+                      <p className="text-sm leading-6 text-slate-700 whitespace-pre-line wrap-break-word">
+                        {content}
+                      </p>
+                    )}
+
+                    {imageUrl && (
+                      <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                        <img src={imageUrl} alt="Preview" className="h-48 w-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4 border-t border-slate-200">
+                <Button
+                  type="button"
+                  asChild
+                  variant="outline"
+                  className="rounded-lg"
+                >
+                  <Link href="/feed">Cancel</Link>
                 </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-white/70 bg-white/85 shadow-sm backdrop-blur">
-              <CardContent className="space-y-6 p-5 sm:p-6">
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-11">
-                    <AvatarImage src={user?.avatar_url ?? undefined} alt={user?.username ?? "SocialConnect user"} />
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
-
-                  <div>
-                    <p className="font-semibold tracking-tight text-slate-950">
-                      {user ? `${user.first_name} ${user.last_name}`.trim() : "SocialConnect user"}
-                    </p>
-                    <p className="text-sm text-slate-500">{user?.username ? `@${user.username}` : "Ready to post"}</p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="space-y-2">
-                    <Textarea
-                      value={content}
-                      onChange={(event) => setContent(event.target.value.slice(0, 280))}
-                      placeholder="Share something thoughtful with your network..."
-                      className="min-h-40 rounded-[1.5rem] border-slate-200 bg-white px-4 py-4 text-base"
-                      required
-                    />
-                    <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span>{remainingChars} characters left</span>
-                      <span>Max 280 characters</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
-                      <ImageIcon className="h-4 w-4" />
-                      Image URL
-                    </div>
-                    <Input
-                      value={imageUrl}
-                      onChange={(event) => setImageUrl(event.target.value)}
-                      placeholder="https://..."
-                      className="h-11 rounded-full border-slate-200 bg-white px-4"
-                    />
-                  </div>
-
-                  {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-                  {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm text-slate-500">
-                      Keep it clear, short, and easy to scan.
-                    </p>
-                    <Button type="submit" className="rounded-full px-6" disabled={submitting || !content.trim()}>
-                      {submitting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Publishing...
-                        </>
-                      ) : (
-                        <>
-                          Publish post
-                          <ArrowRight className="h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
-        </section>
-
-        <aside className="space-y-4">
-          <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-            <CardContent className="space-y-4 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-950">Writing tips</p>
-                  <p className="text-xs text-slate-500">Simple, direct, and visual</p>
-                </div>
+                <Button
+                  type="submit"
+                  className="ml-auto rounded-lg"
+                  disabled={submitting || !content.trim()}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Publishing...
+                    </>
+                  ) : (
+                    "Publish post"
+                  )}
+                </Button>
               </div>
-
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="rounded-2xl bg-slate-100 px-3 py-2">Lead with the main idea</li>
-                <li className="rounded-2xl bg-slate-100 px-3 py-2">Use one image max</li>
-                <li className="rounded-2xl bg-slate-100 px-3 py-2">Keep the post easy to skim</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
-            <CardContent className="space-y-4 p-5">
-              <p className="text-sm font-medium text-slate-500">Preview</p>
-
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-10">
-                    <AvatarImage src={user?.avatar_url ?? undefined} alt={user?.username ?? "SocialConnect user"} />
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium text-slate-950">
-                      {user ? `${user.first_name} ${user.last_name}`.trim() : "Your profile"}
-                    </p>
-                    <p className="text-xs text-slate-500">{user?.username ? `@${user.username}` : "@your-handle"}</p>
-                  </div>
-                </div>
-
-                <p className="mt-4 whitespace-pre-line text-sm leading-6 text-slate-700">
-                  {content || "Your post preview will appear here."}
-                </p>
-
-                {imageUrl ? (
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-                    <img src={imageUrl} alt="Preview" className="h-52 w-full object-cover" />
-                  </div>
-                ) : null}
-              </div>
-            </CardContent>
-          </Card>
-        </aside>
+            </form>
+          </div>
+        )}
       </div>
     </main>
   );

@@ -5,7 +5,7 @@ const authRoutes = ["/login","/register"];
 
 export function middleware(request:NextRequest){
     const {pathname} = request.nextUrl;
-    const accessToken = request.cookies.get("sb-access-toke")?.value;
+  const accessToken = request.cookies.get("sb-access-token")?.value;
 
     const isProtectedRoute = protectedRoutes.some(
         (route) => pathname === route || pathname.startsWith(`${route}/`),
