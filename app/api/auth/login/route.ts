@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { loginSchema } from "@/lib/validations/auth";
-import { success } from "zod";
 
 export async function POST(request:Request){
     try {
@@ -102,7 +101,7 @@ await admin
 
     return response;
 
-    } catch (error) {
+    } catch {
         return NextResponse.json(
             {success:false,message:"Internal server error"},
             {status:500},

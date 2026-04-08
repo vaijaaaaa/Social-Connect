@@ -23,9 +23,13 @@ export function middleware(request:NextRequest){
     return NextResponse.redirect(new URL("/feed",request.url));
   }
 
+  if (pathname === "/" && accessToken) {
+    return NextResponse.redirect(new URL("/feed", request.url));
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/feed/:path*", "/me/:path*", "/create/:path*", "/login/:path*", "/register/:path*"],
+  matcher: ["/", "/feed/:path*", "/me/:path*", "/create/:path*", "/login/:path*", "/register/:path*"],
 };

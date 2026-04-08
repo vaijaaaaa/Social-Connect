@@ -41,7 +41,7 @@ export async function DELETE(_: Request, context: Context) {
       );
     }
 
-    const { data: commentData, error: deleteError } = await admin
+    const { error: deleteError } = await admin
       .from("comments")
       .delete()
       .eq("id", comment_id)

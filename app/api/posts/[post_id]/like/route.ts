@@ -8,7 +8,7 @@ type Context = {
   }>;
 };
 
-export async function POST(request: Request, context: Context) {
+export async function POST(_: Request, context: Context) {
   try {
     const { user, unauthorized } = await requireAuth();
 
@@ -98,7 +98,7 @@ export async function DELETE(_: Request, context: Context) {
 
     const admin = createSupabaseAdminClient();
 
-    const { data: likeData, error: deleteError } = await admin
+    const { error: deleteError } = await admin
       .from("likes")
       .delete()
       .eq("post_id", post_id)
