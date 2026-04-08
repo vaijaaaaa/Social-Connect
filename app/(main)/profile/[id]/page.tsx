@@ -20,6 +20,12 @@ import {
 } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Profile = {
   id: string;
@@ -100,6 +106,8 @@ export default function PublicProfilePage() {
   const [error, setError] = useState("");
   const [followLoading, setFollowLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [listDialogOpen, setListDialogOpen] = useState(false);
+  const [activeList, setActiveList] = useState<"followers" | "following" | null>(null);
 
   useEffect(() => {
     if (!profileId) {
@@ -231,6 +239,33 @@ export default function PublicProfilePage() {
   }
 
   const initialsText = `${profile?.first_name?.[0] ?? "S"}${profile?.last_name?.[0] ?? "C"}`.toUpperCase();
+  const activeListItems = activeList === "followers" ? followers : activeList === "following" ? following : [];
+  const activeListTitle = activeList === "followers" ? "Followers" : activeList === "following" ? "Following" : "People";
+
+  function openListDialog(listType: "followers" | "following") {
+    setActiveList(listType);
+    setListDialogOpen(true);
+  }
+
+  function renderUserName(item: FollowItem) {
+    const profileData = activeList === "followers" ? item.follower : item.following;
+    return `${profileData?.first_name ?? ""} ${profileData?.last_name ?? ""}`.trim() || "SocialConnect user";
+  }
+
+  function renderUserHandle(item: FollowItem) {
+    const profileData = activeList === "followers" ? item.follower : item.following;
+    return profileData?.username ?? "user";
+  }
+
+  function renderUserAvatar(item: FollowItem) {
+    const profileData = activeList === "followers" ? item.follower : item.following;
+    return profileData?.avatar_url ?? undefined;
+  }
+
+  function renderUserHref(item: FollowItem) {
+    const profileData = activeList === "followers" ? item.follower : item.following;
+    return profileData?.id ? `/profile/${profileData.id}` : "/feed";
+  }
 
   return (
     <main className="min-h-screen bg-white text-slate-950">
@@ -343,14 +378,22 @@ export default function PublicProfilePage() {
                   <p className="text-lg font-semibold">{profilePosts.length}</p>
                   <p className="text-xs text-slate-600">Posts</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center space-y-1">
+                <button
+                  type="button"
+                  onClick={() => openListDialog("followers")}
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center space-y-1 transition-colors hover:border-slate-300 hover:bg-white"
+                >
                   <p className="text-lg font-semibold">{followers.length}</p>
                   <p className="text-xs text-slate-600">Followers</p>
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center space-y-1">
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openListDialog("following")}
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center space-y-1 transition-colors hover:border-slate-300 hover:bg-white"
+                >
                   <p className="text-lg font-semibold">{following.length}</p>
                   <p className="text-xs text-slate-600">Following</p>
-                </div>
+                </button>
               </div>
             </div>
 
@@ -405,6 +448,55 @@ export default function PublicProfilePage() {
             </div>
           </div>
         ) : null}
+
+        <Dialog open={listDialogOpen} onOpenChange={setListDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{activeListTitle}</DialogTitle>
+            </DialogHeader>
+
+            <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+              {activeListItems.length === 0 ? (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
+                  <p className="text-sm text-slate-600">No {activeListTitle.toLowerCase()} yet.</p>
+                </div>
+              ) : (
+                activeListItems.map((item) => {
+                  const userName = renderUserName(item);
+                  const userHandle = renderUserHandle(item);
+                  const avatarUrl = renderUserAvatar(item);
+                  const href = renderUserHref(item);
+
+                  return (
+                    <Link
+                      key={item.id}
+                      href={href}
+                      onClick={() => setListDialogOpen(false)}
+                      className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      <Avatar className="h-10 w-10 shrink-0">
+                        <AvatarImage src={avatarUrl} alt={userHandle} />
+                        <AvatarFallback className="text-xs">
+                          {userName
+                            .split(" ")
+                            .slice(0, 2)
+                            .map((part) => part[0])
+                            .join("")
+                            .toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-slate-950">{userName}</p>
+                        <p className="truncate text-xs text-slate-500">@{userHandle}</p>
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );
