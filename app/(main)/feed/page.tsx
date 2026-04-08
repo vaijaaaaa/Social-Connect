@@ -423,11 +423,11 @@ export default function FeedPage() {
 
                         {/* Image */}
                         {post.image_url ? (
-                          <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                          <div className="aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
                             <img
                               src={post.image_url}
                               alt="Post attachment"
-                              className="h-64 w-full object-cover"
+                              className="h-full w-full object-contain"
                             />
                           </div>
                         ) : null}
