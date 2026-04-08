@@ -89,12 +89,23 @@ export async function POST(request: Request, context: Context) {
 export async function DELETE(_: Request, context: Context) {
   try {
     const { post_id } = await context.params;
+    const body = await _.json();
+    const { user_id } = body;
+
+    if (!user_id) {
+      return NextResponse.json(
+        { success: false, message: "user_id is required" },
+        { status: 400 },
+      );
+    }
+
     const admin = createSupabaseAdminClient();
 
     const { data: likeData, error: deleteError } = await admin
       .from("likes")
       .delete()
       .eq("post_id", post_id)
+      .eq("user_id", user_id)
       .select("id")
       .single();
 
@@ -114,11 +125,6 @@ export async function DELETE(_: Request, context: Context) {
     await admin
       .from("posts")
       .update({ like_count: Math.max((postData?.like_count || 0) - 1, 0) })
-      .eq("id", post_id);
-
-    await admin
-      .from("posts")
-      .update({ like_count: (postData?.like_count || 0) - 1 })
       .eq("id", post_id);
 
     return NextResponse.json(

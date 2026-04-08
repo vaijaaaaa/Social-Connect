@@ -1,20 +1,29 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { requireAuth } from "@/lib/auth/guards";
+
+const profileSelect =
+  "id, email, username, first_name, last_name, bio, avatar_url, website, location, last_login_at, created_at, updated_at";
 
 export async function GET() {
   try {
+    const { user, unauthorized } = await requireAuth();
+
+    if (unauthorized) {
+      return unauthorized;
+    }
+
     const admin = createSupabaseAdminClient();
 
     const { data, error } = await admin
       .from("profiles")
-      .select(
-        "id, email, username, first_name, last_name, bio, avatar_url, website, location, last_login_at, created_at, updated_at",
-      )
-      .single();
+      .select(profileSelect)
+      .eq("id", user.id)
+      .maybeSingle();
 
-    if (error) {
+    if (error || !data) {
       return NextResponse.json(
-        { success: false, message: error.message },
+        { success: false, message: "Profile not found" },
         { status: 404 },
       );
     }
@@ -36,6 +45,12 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
+    const { user, unauthorized } = await requireAuth();
+
+    if (unauthorized) {
+      return unauthorized;
+    }
+
     const body = await request.json();
     const admin = createSupabaseAdminClient();
 
@@ -51,14 +66,13 @@ export async function PATCH(request: Request) {
     const { data, error } = await admin
       .from("profiles")
       .update(updateData)
-      .select(
-        "id, email, username, first_name, last_name, bio, avatar_url, website, location, last_login_at, created_at, updated_at",
-      )
-      .single();
+      .eq("id", user.id)
+      .select(profileSelect)
+      .maybeSingle();
 
-    if (error) {
+    if (error || !data) {
       return NextResponse.json(
-        { success: false, message: error.message },
+        { success: false, message: "Profile update failed" },
         { status: 400 },
       );
     }
