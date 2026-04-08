@@ -36,6 +36,11 @@ type FeedPost = {
   } | null;
 };
 
+type CurrentUser = {
+  id: string;
+  avatar_url: string | null;
+};
+
 function formatTime(value: string) {
   const date = new Date(value);
   return new Intl.DateTimeFormat("en", {
@@ -53,6 +58,7 @@ function getInitials(firstName?: string, lastName?: string) {
 
 export default function FeedPage() {
   const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -60,18 +66,33 @@ export default function FeedPage() {
   useEffect(() => {
     async function loadFeed() {
       try {
-        const response = await fetch("/api/feed", {
-          cache: "no-store",
-        });
+        const [feedResponse, meResponse] = await Promise.all([
+          fetch("/api/feed", {
+            cache: "no-store",
+          }),
+          fetch("/api/users/me", {
+            cache: "no-store",
+          }),
+        ]);
 
-        const data = await response.json();
+        const data = await feedResponse.json();
 
-        if (!response.ok || !data.success) {
+        if (!feedResponse.ok || !data.success) {
           setError(data.message || "Unable to load feed");
           return;
         }
 
         setPosts(Array.isArray(data.posts) ? data.posts : []);
+
+        if (meResponse.ok) {
+          const meData = await meResponse.json();
+          if (meData?.success && meData?.user?.id) {
+            setCurrentUser({
+              id: meData.user.id,
+              avatar_url: meData.user.avatar_url ?? null,
+            });
+          }
+        }
       } catch {
         setError("Unable to load feed right now.");
       } finally {
@@ -192,6 +213,10 @@ export default function FeedPage() {
                 {filteredPosts.map((post) => {
                   const profile = post.profiles;
                   const name = profile ? `${profile.first_name} ${profile.last_name}`.trim() : "User";
+                  const avatarSrc =
+                    profile?.avatar_url ??
+                    (currentUser?.id === post.author_id ? currentUser.avatar_url : null) ??
+                    undefined;
 
                   return (
                     <Link
@@ -202,7 +227,7 @@ export default function FeedPage() {
                       {/* Post Header */}
                       <div className="flex gap-3 mb-3">
                         <Avatar className="h-10 w-10 shrink-0">
-                          <AvatarImage src={profile?.avatar_url ?? undefined} alt={name} />
+                          <AvatarImage src={avatarSrc} alt={name} />
                           <AvatarFallback className="text-xs">
                             {getInitials(profile?.first_name, profile?.last_name)}
                           </AvatarFallback>
