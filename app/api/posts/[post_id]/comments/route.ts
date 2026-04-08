@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type Context = {
@@ -51,13 +52,19 @@ export async function GET(_: Request, context: Context) {
 
 export async function POST(request: Request, context: Context) {
   try {
+    const { user, unauthorized } = await requireAuth();
+
+    if (unauthorized) {
+      return unauthorized;
+    }
+
     const { post_id } = await context.params;
     const body = await request.json();
-    const { user_id, content } = body;
+    const { content } = body;
 
-    if (!user_id || !content) {
+    if (!content) {
       return NextResponse.json(
-        { success: false, message: "user_id and content are required" },
+        { success: false, message: "content is required" },
         { status: 400 },
       );
     }
@@ -75,7 +82,7 @@ export async function POST(request: Request, context: Context) {
       .from("comments")
       .insert({
         post_id,
-        user_id,
+        user_id: user.id,
         content,
       })
       .select(

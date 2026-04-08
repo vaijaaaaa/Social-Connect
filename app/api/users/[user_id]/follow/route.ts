@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type Context = {
@@ -9,16 +10,14 @@ type Context = {
 
 export async function POST(request: Request, context: Context) {
   try {
-    const { user_id: following_id } = await context.params;
-    const body = await request.json();
-    const { follower_id } = body;
+    const { user, unauthorized } = await requireAuth();
 
-    if (!follower_id) {
-      return NextResponse.json(
-        { success: false, message: "follower_id is required" },
-        { status: 400 },
-      );
+    if (unauthorized) {
+      return unauthorized;
     }
+
+    const { user_id: following_id } = await context.params;
+    const follower_id = user.id;
 
     if (follower_id === following_id) {
       return NextResponse.json(
@@ -77,16 +76,14 @@ export async function POST(request: Request, context: Context) {
 
 export async function DELETE(request: Request, context: Context) {
   try {
-    const { user_id: following_id } = await context.params;
-    const body = await request.json();
-    const { follower_id } = body;
+    const { user, unauthorized } = await requireAuth();
 
-    if (!follower_id) {
-      return NextResponse.json(
-        { success: false, message: "follower_id is required" },
-        { status: 400 },
-      );
+    if (unauthorized) {
+      return unauthorized;
     }
+
+    const { user_id: following_id } = await context.params;
+    const follower_id = user.id;
 
     const admin = createSupabaseAdminClient();
 

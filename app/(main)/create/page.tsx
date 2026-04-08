@@ -238,13 +238,13 @@ export default function CreatePostPage() {
                     {uploadingImage ? "Uploading..." : "Upload image"}
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png"
                       className="hidden"
                       onChange={handleImageUpload}
                       disabled={uploadingImage}
                     />
                   </label>
-                  <p className="text-xs text-slate-500">Max 10MB. JPG, PNG, WEBP, GIF.</p>
+                  <p className="text-xs text-slate-500">Max 2MB. JPG or PNG only.</p>
                 </div>
               </div>
 

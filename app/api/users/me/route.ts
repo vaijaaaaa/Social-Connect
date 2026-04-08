@@ -28,10 +28,19 @@ export async function GET() {
       );
     }
 
+    const { count } = await admin
+      .from("posts")
+      .select("id", { count: "exact", head: true })
+      .eq("author_id", user.id)
+      .eq("is_active", true);
+
     return NextResponse.json(
       {
         success: true,
-        user: data,
+        user: {
+          ...data,
+          posts_count: count ?? 0,
+        },
       },
       { status: 200 },
     );

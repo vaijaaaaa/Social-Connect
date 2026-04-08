@@ -284,13 +284,13 @@ export default function MePage() {
                       {uploadingAvatar ? "Uploading..." : "Upload image"}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png"
                         className="hidden"
                         onChange={handleAvatarUpload}
                         disabled={uploadingAvatar}
                       />
                     </label>
-                    <p className="text-xs text-slate-500">Max 5MB. JPG, PNG, WEBP, GIF.</p>
+                    <p className="text-xs text-slate-500">Max 2MB. JPG or PNG only.</p>
                   </div>
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type Context = {
@@ -9,16 +10,14 @@ type Context = {
 
 export async function POST(request: Request, context: Context) {
   try {
-    const { post_id } = await context.params;
-    const body = await request.json();
-    const { user_id } = body;
+    const { user, unauthorized } = await requireAuth();
 
-    if (!user_id) {
-      return NextResponse.json(
-        { success: false, message: "user_id is required" },
-        { status: 400 },
-      );
+    if (unauthorized) {
+      return unauthorized;
     }
+
+    const { post_id } = await context.params;
+    const user_id = user.id;
 
     const admin = createSupabaseAdminClient();
 
@@ -88,16 +87,14 @@ export async function POST(request: Request, context: Context) {
 
 export async function DELETE(_: Request, context: Context) {
   try {
-    const { post_id } = await context.params;
-    const body = await _.json();
-    const { user_id } = body;
+    const { user, unauthorized } = await requireAuth();
 
-    if (!user_id) {
-      return NextResponse.json(
-        { success: false, message: "user_id is required" },
-        { status: 400 },
-      );
+    if (unauthorized) {
+      return unauthorized;
     }
+
+    const { post_id } = await context.params;
+    const user_id = user.id;
 
     const admin = createSupabaseAdminClient();
 

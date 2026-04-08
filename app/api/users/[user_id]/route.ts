@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
+async function getPostsCount(admin: ReturnType<typeof createSupabaseAdminClient>, userId: string) {
+  const { count } = await admin
+    .from("posts")
+    .select("id", { count: "exact", head: true })
+    .eq("author_id", userId)
+    .eq("is_active", true);
+
+  return count ?? 0;
+}
+
 type Context = {
   params: Promise<{
     user_id: string;
@@ -27,10 +37,15 @@ export async function GET(_: Request, context: Context) {
       );
     }
 
+    const posts_count = await getPostsCount(admin, user_id);
+
     return NextResponse.json(
       {
         success: true,
-        user: data,
+        user: {
+          ...data,
+          posts_count,
+        },
       },
       { status: 200 },
     );

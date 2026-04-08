@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type Context = {
@@ -10,8 +11,35 @@ type Context = {
 
 export async function DELETE(_: Request, context: Context) {
   try {
+    const { user, unauthorized } = await requireAuth();
+
+    if (unauthorized) {
+      return unauthorized;
+    }
+
     const { post_id, comment_id } = await context.params;
     const admin = createSupabaseAdminClient();
+
+    const { data: commentRecord, error: commentFetchError } = await admin
+      .from("comments")
+      .select("id, user_id")
+      .eq("id", comment_id)
+      .eq("post_id", post_id)
+      .maybeSingle();
+
+    if (commentFetchError || !commentRecord) {
+      return NextResponse.json(
+        { success: false, message: "Comment not found or already deleted" },
+        { status: 404 },
+      );
+    }
+
+    if (commentRecord.user_id !== user.id) {
+      return NextResponse.json(
+        { success: false, message: "You can only delete your own comment" },
+        { status: 403 },
+      );
+    }
 
     const { data: commentData, error: deleteError } = await admin
       .from("comments")

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -8,6 +9,7 @@ import {
   Heart,
   Loader2,
   MessageCircle,
+  Trash2,
   UserCheck,
   UserPlus,
 } from "lucide-react";
@@ -79,6 +81,7 @@ function initials(firstName?: string, lastName?: string) {
 
 export default function PostDetailPage() {
   const params = useParams<{ id?: string | string[] }>();
+  const router = useRouter();
   const postId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [post, setPost] = useState<PostDetail | null>(null);
@@ -92,6 +95,8 @@ export default function PostDetailPage() {
   const [liked, setLiked] = useState(false);
   const [followingAuthor, setFollowingAuthor] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [deletingPost, setDeletingPost] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
 
   const remainingChars = useMemo(() => 280 - commentText.length, [commentText]);
 
@@ -265,6 +270,74 @@ export default function PostDetailPage() {
     }
   }
 
+  async function handleDeletePost() {
+    if (!postId || !currentUser || !post || post.author_id !== currentUser.id) {
+      return;
+    }
+
+    if (!window.confirm("Delete this post? This cannot be undone.")) {
+      return;
+    }
+
+    setDeletingPost(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setError(data.message || "Could not delete post");
+        return;
+      }
+
+      router.push("/feed");
+      router.refresh();
+    } catch {
+      setError("Could not delete post right now.");
+    } finally {
+      setDeletingPost(false);
+    }
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    if (!postId || !currentUser || deletingCommentId) {
+      return;
+    }
+
+    if (!window.confirm("Delete this comment?")) {
+      return;
+    }
+
+    setDeletingCommentId(commentId);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setError(data.message || "Could not delete comment");
+        return;
+      }
+
+      setComments((currentComments) => currentComments.filter((comment) => comment.id !== commentId));
+      setPost((current) =>
+        current ? { ...current, comment_count: Math.max(current.comment_count - 1, 0) } : current,
+      );
+    } catch {
+      setError("Could not delete comment right now.");
+    } finally {
+      setDeletingCommentId(null);
+    }
+  }
+
   const postAuthor = post?.profiles;
   const authorName = postAuthor ? `${postAuthor.first_name} ${postAuthor.last_name}`.trim() : "User";
 
@@ -318,7 +391,7 @@ export default function PostDetailPage() {
                   </div>
 
                   {postAuthor?.id ? (
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <Button asChild variant="outline" size="sm" className="h-8 rounded-lg text-xs">
                         <Link href={`/profile/${postAuthor.id}`}>View profile</Link>
                       </Button>
@@ -346,6 +419,29 @@ export default function PostDetailPage() {
                             <>
                               <UserPlus className="h-3.5 w-3.5" />
                               Follow
+                            </>
+                          )}
+                        </Button>
+                      ) : null}
+
+                      {currentUser && currentUser.id === postAuthor.id ? (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="h-8 rounded-lg text-xs"
+                          onClick={handleDeletePost}
+                          disabled={deletingPost}
+                        >
+                          {deletingPost ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Delete post
                             </>
                           )}
                         </Button>
@@ -465,6 +561,7 @@ export default function PostDetailPage() {
               <div className="space-y-3">
                 {comments.map((comment) => {
                   const commentProfile = comment.profiles;
+                  const isOwnComment = currentUser?.id === comment.user_id;
                   return (
                     <div key={comment.id} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
                       <div className="flex items-start gap-3">
@@ -485,6 +582,23 @@ export default function PostDetailPage() {
                             {comment.content}
                           </p>
                         </div>
+
+                        {isOwnComment ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 rounded-lg px-2 text-xs text-slate-500 hover:text-red-600"
+                            onClick={() => handleDeleteComment(comment.id)}
+                            disabled={deletingCommentId === comment.id}
+                          >
+                            {deletingCommentId === comment.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                   );

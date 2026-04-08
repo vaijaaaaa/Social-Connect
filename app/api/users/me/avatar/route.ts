@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_SIZE_BYTES } from "@/lib/utils/constants";
 
 const AVATAR_BUCKET = "avatars";
-const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 function getExtension(fileName: string, mimeType: string) {
   const byName = fileName.split(".").pop()?.toLowerCase();
@@ -12,8 +12,6 @@ function getExtension(fileName: string, mimeType: string) {
   }
 
   if (mimeType === "image/png") return "png";
-  if (mimeType === "image/webp") return "webp";
-  if (mimeType === "image/gif") return "gif";
   return "jpg";
 }
 
@@ -34,16 +32,16 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!file.type.startsWith("image/")) {
+    if (!ALLOWED_IMAGE_MIME_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { success: false, message: "Only image files are allowed" },
+        { success: false, message: "Only JPEG and PNG images are allowed" },
         { status: 400 },
       );
     }
 
-    if (file.size > MAX_SIZE_BYTES) {
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
       return NextResponse.json(
-        { success: false, message: "Image must be smaller than 5MB" },
+        { success: false, message: "Image must be smaller than 2MB" },
         { status: 400 },
       );
     }
