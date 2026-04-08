@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Heart,
   Loader2,
+  LogOut,
   MessageCircle,
   Search,
   Sparkles,
@@ -57,9 +59,11 @@ function getInitials(firstName?: string, lastName?: string) {
 }
 
 export default function FeedPage() {
+  const router = useRouter();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
 
@@ -119,6 +123,19 @@ export default function FeedPage() {
     });
   }, [posts, search]);
 
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+    } finally {
+      router.push("/login");
+      router.refresh();
+      setLoggingOut(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-white text-slate-950">
       <div className="mx-auto grid w-full max-w-7xl gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -153,6 +170,15 @@ export default function FeedPage() {
               >
                 Create post
               </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-60"
+              >
+                {loggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+                {loggingOut ? "Logging out..." : "Logout"}
+              </button>
             </nav>
           </div>
         </aside>

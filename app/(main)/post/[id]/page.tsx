@@ -8,8 +8,8 @@ import {
   Heart,
   Loader2,
   MessageCircle,
-  Send,
-  Sparkles,
+  UserCheck,
+  UserPlus,
 } from "lucide-react";
 import {
   Avatar,
@@ -17,8 +17,6 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 type CurrentUser = {
@@ -92,6 +90,8 @@ export default function PostDetailPage() {
   const [postingComment, setPostingComment] = useState(false);
   const [liking, setLiking] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [followingAuthor, setFollowingAuthor] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   const remainingChars = useMemo(() => 280 - commentText.length, [commentText]);
 
@@ -127,6 +127,23 @@ export default function PostDetailPage() {
 
         if (userResponse.ok && userData.success) {
           setCurrentUser(userData.user);
+
+          const authorId = postData?.post?.author_id as string | undefined;
+          if (authorId && userData.user.id && authorId !== userData.user.id) {
+            const followingResponse = await fetch(`/api/users/${userData.user.id}/following`, {
+              cache: "no-store",
+            });
+
+            if (followingResponse.ok) {
+              const followingData = await followingResponse.json();
+              if (followingData?.success && Array.isArray(followingData.following)) {
+                const isFollowing = followingData.following.some(
+                  (item: { following?: { id?: string } | null }) => item.following?.id === authorId,
+                );
+                setFollowingAuthor(isFollowing);
+              }
+            }
+          }
         }
 
         setPost(postData.post);
@@ -139,6 +156,38 @@ export default function PostDetailPage() {
 
     loadPage();
   }, [postId]);
+
+  async function handleFollowAuthor() {
+    if (!post?.author_id || !currentUser || post.author_id === currentUser.id || followLoading) {
+      return;
+    }
+
+    setFollowLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/users/${post.author_id}/follow`, {
+        method: followingAuthor ? "DELETE" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ follower_id: currentUser.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setError(data.message || "Could not update follow state");
+        return;
+      }
+
+      setFollowingAuthor((current) => !current);
+    } catch {
+      setError("Could not update follow state right now.");
+    } finally {
+      setFollowLoading(false);
+    }
+  }
 
   async function handleLike() {
     if (!postId || !currentUser || liking || liked) {
@@ -267,6 +316,42 @@ export default function PostDetailPage() {
                     <span className="text-slate-400">·</span>
                     <p className="text-xs text-slate-500">{formatDate(post.created_at)}</p>
                   </div>
+
+                  {postAuthor?.id ? (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button asChild variant="outline" size="sm" className="h-8 rounded-lg text-xs">
+                        <Link href={`/profile/${postAuthor.id}`}>View profile</Link>
+                      </Button>
+
+                      {currentUser && currentUser.id !== postAuthor.id ? (
+                        <Button
+                          type="button"
+                          variant={followingAuthor ? "outline" : "default"}
+                          size="sm"
+                          className="h-8 rounded-lg text-xs"
+                          onClick={handleFollowAuthor}
+                          disabled={followLoading}
+                        >
+                          {followLoading ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              Updating...
+                            </>
+                          ) : followingAuthor ? (
+                            <>
+                              <UserCheck className="h-3.5 w-3.5" />
+                              Following
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="h-3.5 w-3.5" />
+                              Follow
+                            </>
+                          )}
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               </div>
 

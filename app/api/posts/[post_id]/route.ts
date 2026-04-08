@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { success } from "zod";
-import { Erica_One } from "next/font/google";
 
 type Context = {
     params:Promise<{
@@ -17,8 +15,20 @@ export async function GET(_:Request,context:Context){
         const{data,error} = await admin
             .from("posts")
             .select(
-                "id, author_id, content, image_url, is_active, like_count, comment_count, created_at, updated_at",
+                `
+                id,
+                author_id,
+                content,
+                image_url,
+                is_active,
+                like_count,
+                comment_count,
+                created_at,
+                updated_at,
+                profiles:author_id(id, username, first_name, last_name, avatar_url)
+                `,
             )
+            .eq("id", post_id)
             .single();
 
         if(error){
@@ -31,7 +41,7 @@ export async function GET(_:Request,context:Context){
         return NextResponse.json(
             {
                 success:true,
-                message:"Posts updated successfully",
+                message:"Post loaded successfully",
                 post:data,
             },{
                 status:200
@@ -40,7 +50,7 @@ export async function GET(_:Request,context:Context){
 
     } catch  {
         return NextResponse.json(
-            {success:false,message:"Internal servere error"},
+            {success:false,message:"Internal server error"},
             {status:500},
         );
     }
